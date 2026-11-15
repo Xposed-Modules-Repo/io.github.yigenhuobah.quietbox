@@ -4,20 +4,23 @@
 
 基于 [libxposed](https://github.com/libxposed) Modern API 102，纯 Java Hook 实现。
 
-> 当前版本：**0.9.9**（versionCode 23）。适配小红书 9.53.0（9530807），0.9.8 发布时静态体检清单 64/64；主分支新增 EN-04 旧门与 PV-02 协调器锚点后为 67/67。0.9.8 按 9.53.0 重定位 21 个挂载点（7 SIG / 14 GONE），APK 静态体检 64/64（0.9.8）；0.9.7 按 9.52.1 重定位 31 个挂载点（11 SIG / 20 GONE）；0.9.6 新增配置逐键容错、`config_version` 与设置页「恢复默认」；0.9.5 完成失败可见化：全关时仍有诊断/崩溃捕获、安装重试清理失败标记、写回滚保留确认值、字段锚点失败可见、skip 原因列表。0.9.4 新增 EN-04 强制允许保存（默认关，真机验证通过）；0.9.3 加入崩溃捕获与导出诊断包；0.9.1 新增 EN-03 实况图去水印（默认关，真机开/关对比验证通过）。0.9.8 已完成 9.53.0 真机冒烟（15 注册 / 3 hit / 0 err），未逐项核对 hook 命中与开关效果。AD-04/AD-05 与 EX-01 离线分支仍未真机验证。**只支持 9.53.0，不再支持 9.52.1 及更早版本**。
+> 当前版本：**0.9.12**（versionCode 26）。适配小红书 9.54.1（9541801），70 个锚点全部按 9.54.1 APK 重新定位并通过静态体检（methods 70/70、classes 6/6）。本版新增诊断回传 socket 快速通道（socket → ContentProvider，失败自动回落），底栏第二个 tab 由「测试」更名为「实验」。0.9.11 为 CodeFloe 迁移补丁版；0.9.10 新增 UI-06「阻止返回自动刷新」，并把 EN-04 条目门（PR #9）重定位到 9.54.1；EN-03 四个实况链路锚点、EX-01、UI-04 也一并重定位。0.9.9 为四模块深审修复版（本模块 122 条）。0.9.8 按 9.53.0 重定位 21 个挂载点（7 SIG / 14 GONE）。**只支持 9.54.1，不再支持 9.53.0 及更早版本**。
 
 > ⚠️ 本项目与小红书官方无任何关联，仅供学习、研究和个人设备使用。
 > 使用前请阅读文末的[免责声明](#免责声明)。
 
-**仓库**：<https://github.com/yigenhuobah/quietbox> ｜ **下载**：[Releases](https://github.com/yigenhuobah/quietbox/releases) ｜ **反馈**：[Issues](https://github.com/yigenhuobah/quietbox/issues/new/choose)
+**主平台**：[CodeFloe](https://codefloe.com/quiet-tools/quietbox) ｜ **项目主页**：[quiet-tools.codefloe.page](https://quiet-tools.codefloe.page/) ｜ **下载**：[Releases](https://codefloe.com/quiet-tools/quietbox/releases) ｜ **通知**：[Telegram](https://t.me/yigenhuobah) ｜ **反馈**：[Issues](https://codefloe.com/quiet-tools/quietbox/issues/new)
 
 更新日志见 [CHANGELOG.md](CHANGELOG.md)。
+
+> 源码、Issues 与 Releases 已迁移到 CodeFloe；GitHub 官方 Xposed 镜像保留旧版本，恢复后同步。
+
 
 ---
 
 ## 功能
 
-26 项功能，**23 项提供开关**（3 项 blocked 不渲染；EX-01 为实验性，未在真实场景实测），每项独立开关。默认值遵循“净化开、敏感关”：广告净化与界面精简默认开启，隐私保护、功能增强、实验功能默认关闭。改动需重启小红书生效（实验页的单项实验约 3 秒生效）。
+27 项功能，**24 项提供开关**（3 项 blocked 不渲染；EX-01 为实验性，未在真实场景实测），每项独立开关。默认值遵循“净化开、敏感关”：广告净化与界面精简默认开启，隐私保护、功能增强、实验功能默认关闭。改动需重启小红书生效（实验页的单项实验约 3 秒生效）。
 
 ### 广告净化（AD）
 
@@ -35,7 +38,7 @@
 | AD-10 | 投票卡过滤 | 首页信息流按 `modelType` 过滤投票卡；仅覆盖已验证的首页列表链路，详情连播不覆盖 | 开 |
 | AD-11 | 摇一摇跳转禁用 | 本版本不可用：广告摇一摇检测在原生引擎侧，Java 层无精确挂载点 | 关 |
 
-> AD-08/09/10 只挂首页信息流的列表追加、刷新与分页路径（9.53.0 为 `hgd.m0#S` / `hgd.m0#C0` / `bgd/s#Sd`；9.52.1 为 `nfd.m0#S` / `nfd.m0#C0` / `ifd/s#Pd`；9.52.0 为 `ExploreView#S` / `ExploreView#C0` / `vha/s#Pd`），不处理详情页连播；9.51.0 真机曾观察到 `modelType=note` 与 `live_v2` 并保留正常笔记，9.53.0 沿用同一链路、尚未真机验证，其他类型原样放行。
+> AD-08/09/10 只挂首页信息流的列表追加、刷新与分页路径（9.54.1 为 `zid.m0#T` / `zid.m0#E0` / `tid.t#Xd`；9.53.0 为 `hgd.m0#S` / `hgd.m0#C0` / `bgd/s#Sd`；9.52.0 为 `ExploreView#S` / `ExploreView#C0` / `vha/s#Pd`），不处理详情页连播；9.51.0 真机曾观察到 `modelType=note` 与 `live_v2` 并保留正常笔记，9.54.1 沿用同一链路、尚未真机验证，其他类型原样放行。
 
 ### 界面精简（UI）
 
@@ -46,6 +49,7 @@
 | UI-03 | 满意度调研条屏蔽 | 详情页不再弹出「对内容满意吗」 | 开 |
 | UI-04 | 更新弹窗屏蔽 | 不再弹出版本更新提示 | 开 |
 | UI-05 | 自动播放 | 关闭详情页/视频 tab 的自动播放（画质偏好本版本不提供） | 开 |
+| UI-06 | 阻止返回自动刷新 | 按返回或重新打开时保留当前首页推荐，不自动刷新；下拉刷新不受影响 | 开 |
 
 ### 隐私保护（PV）
 
@@ -81,11 +85,11 @@ PV-03 另有一个子选项「同时删除 xsec_token」，不单独编号，依
 
 ## 界面
 
-- **底栏 4 Tab**：设置 / 测试 / 诊断 / 关于，底部导航切换、状态各自保留。
+- **底栏 4 Tab**：设置 / 实验 / 诊断 / 关于，底部导航切换、状态各自保留。
 - **设置 Tab**：状态卡 → 异常横幅 → AD/UI/PV/EN/EX 分组 → 恢复默认 → 页脚。
 - **状态卡**：只有正在连接框架… / 未激活 / 框架已连接 / 已激活四种状态，副标题显示框架 API、目标版本与 remote prefs 可用性。
 - **异常横幅**：仅在目标应用版本未适配，或已启用且 ≥2 个功能明确失效时出现；不新增第五种状态。
-- **测试 Tab**：AB 测试面板（EX-02）与全量实验导出。
+- **实验 Tab**：AB 测试面板（EX-02）与全量实验导出。
 - **诊断 Tab**：逐功能显示 `编号 标题 · registered · hit N · skip 原因`，无数据用 `—`；页首显示刷新时间，页尾提供刷新与复制。
 - **关于 Tab**：模块版本、目标应用、源码、四模块互链、免责声明与 MIT 许可证。
 
@@ -97,13 +101,13 @@ PV-03 另有一个子选项「同时删除 xsec_token」，不单独编号，依
 
 - Android 10 及以上
 - 已安装 **LSPosed**（Zygisk 版，配合 Magisk / KernelSU）
-- **小红书 9.53.0（versionCode 9530807）**
+- **小红书 9.54.1（versionCode 9541801）**
 
 其他版本可能只有部分功能生效，甚至完全不生效——模块的 Hook 点依赖具体版本。
 
 ## 安装
 
-1. 从 [Releases](https://github.com/yigenhuobah/quietbox/releases) 下载 `quietbox-x.y.z.apk` 并安装。
+1. 从 [Releases](https://codefloe.com/quiet-tools/quietbox/releases) 下载 `quietbox-x.y.z.apk` 并安装。
 2. 打开 **LSPosed 管理器**，在模块列表里启用「静盒」。
 3. 进入模块的作用域设置，勾选 **小红书**（`com.xingin.xhs`）。
 4. 打开「静盒」，确认顶部显示 **已激活**，且副标题包含 **已注入小红书**。
@@ -122,7 +126,7 @@ PV-03 另有一个子选项「同时删除 xsec_token」，不单独编号，依
 诊断页显示 `skip` 或没有注册日志，说明这个版本的挂载点没找到，大概率是小红书升级后内部结构变了。请看「兼容性」。
 
 **升级小红书后失效了？**
-正常现象。模块依赖具体版本的内部结构，升级后需要重新适配。顶部出现「目标应用版本未适配」或「N 项功能未生效」的红色提示时，打开诊断页查看 skip 原因。当前唯一适配版本是 9.53.0，升级小红书后请等待新版本模块，或回退到 9.53.0。
+正常现象。模块依赖具体版本的内部结构，升级后需要重新适配。顶部出现「目标应用版本未适配」或「N 项功能未生效」的红色提示时，打开诊断页查看 skip 原因。当前唯一适配版本是 9.54.1，升级小红书后请等待新版本模块，或回退到 9.54.1。
 
 **会不会导致封号？**
 模块不修改账号数据、不拦截网络请求、不上传任何信息。但它确实会 Hook 目标应用进程，理论上存在被检测的可能。是否使用、是否用于主账号，请自行评估并承担风险。
@@ -148,17 +152,19 @@ PV-03 另有一个子选项「同时删除 xsec_token」，不单独编号，依
 
 | 项目 | 状态 |
 |---|---|
-| 小红书 9.53.0（9530807） | 已适配：21 个挂载点重定位（7 SIG / 14 GONE），0.9.8 静态体检清单 64/64；主分支新增 EN-04 旧门与 PV-02 协调器锚点后 67/67。已完成真机冒烟（15 注册 / 3 hit / 0 err），尚未真机逐项确认，请按诊断页核对 registered/hit |
-| 小红书 9.52.1（9521801）及更早 | **不再支持**：不阻断运行（fail-open），横幅提示「未适配」，大部分功能可能失效 |
+| 小红书 9.54.1（9541801） | 已适配：70 个锚点按 9.54.1 APK 重新定位，静态体检 methods 70/70、classes 6/6（2026-11-14）；真机安装 0.9.10 后各 hook 注册通过（0.9.12 仅诊断回传与文档变更，未改动 hook 锚点），UI-06 的实际命中需在视频 feed 停留超过热启动阈值后复验 |
+| 小红书 9.53.0（9530807）及更早 | **不再支持**：不阻断运行（fail-open），横幅提示「未适配」，大部分功能可能失效 |
 | Android 10 及以上（minSdk 29） | 支持；运行记录覆盖 Android 15（模拟器）与 Android 17（0.8.0 核心回归、0.8.1 诊断修复复验），其余版本未逐一验证 |
 | LSPosed（API 102） | 支持 |
 
 ### 已知限制
 
+- **安装包签名校验**：启动时核对 APK 签名证书与内置指纹；签名不符会首次启动警告一次（不阻断功能）。该校验只能提示二次打包，恶意修改仍可移除，请优先从 CodeFloe Releases / Telegram 频道下载。
 - AD-05 只过滤搜索结果中 `alioth.entities.i` 广告实体，品牌广告卡不在覆盖范围。
 - EN-03 开启后实况保存走预览同源视频：宿主后续若改保存链路（如下线 livePhotoVideoPath）可能失效，因此默认关闭。
 - EX-01（已删除笔记查看）与 AD-04（广告外跳拦截）未真机验证，不据此宣称通过。
-- 小红书 9.52.1 不再支持，请升级到 9.53.0（9530807）。
+- UI-06 只跳过热启动/返回时的 `needRefresh` 写入，不影响下拉刷新；宿主改链路时会 critical skip。
+- 小红书 9.53.0 不再支持，请升级到 9.54.1（9541801）。
 
 > 0.8.1 已修复 0.8.0 的「N 项功能未生效」误报；0.9.0 进一步区分 critical skip 并加入会话标识、TTL 与心跳，只有类级主锚点缺失才会触发失败横幅。
 
@@ -166,10 +172,10 @@ PV-03 另有一个子选项「同时删除 xsec_token」，不单独编号，依
 
 四个模块使用统一的设计与工程规范，可分别独立安装：
 
-- [云音乐工具箱 (CloudMusicTool)](https://github.com/yigenhuobah/cloudmusictool)
+- [云音乐工具箱 (CloudMusicTool)](https://codefloe.com/quiet-tools/cloudmusictool)
 - **静盒 (QuietBox)（当前）**
-- [静途 (QuietMap)](https://github.com/yigenhuobah/quietmap)
-- [贴吧静净 (TiebaQuiet)](https://github.com/yigenhuobah/tiebaquiet)
+- [静途 (QuietMap)](https://codefloe.com/quiet-tools/quietmap)
+- [贴吧静净 (TiebaQuiet)](https://codefloe.com/quiet-tools/tiebaquiet)
 
 ## 从源码构建
 
@@ -184,7 +190,7 @@ gradlew assembleRelease    # 正式包，产物名 quietbox-<版本>.apk
 release 读取仓库根目录的 `keystore.properties` 签名（该文件不入库）。缺失或 `storeFile` 未配置时，release 任务在执行前直接失败，不会回退 debug 签名，也不会产出未签名包。
 
 工具链：Gradle 8.13（wrapper） · AGP 8.13.2 · compileSdk 37 · minSdk 29 · JDK 21（构建）；字节码 source/target 仍为 17。
-当前单测 256 项，`./gradlew :app:testDebugUnitTest` 可复跑；lint 0 errors / 23 warnings。
+当前单测 495 项，`./gradlew :app:testDebugUnitTest` 可复跑；lint 0 errors / 22 warnings。
 首次构建需要自己提供 `local.properties`（`sdk.dir=<SDK 路径>`）。
 
 ## 许可证
