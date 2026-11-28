@@ -4,7 +4,7 @@
 
 基于 [libxposed](https://github.com/libxposed) Modern API 102，纯 Java Hook 实现。
 
-> 当前版本：**0.9.15**（versionCode 29）。适配小红书 9.56.0（9560805）与 9.54.1（9541801）：双 profile（9.54.1 冻结 + 9.56.0 最新），anchors.json 作为唯一源，70 个基线锚点 + 27 个 9.56.0 变体（12 SIG + 15 GONE），静态体检 methods 70/70、classes 6/6。本版新增逐功能降级与版本矩阵，profile 选版对齐 core 0.6.1。0.9.14 聚焦稳定性与发布链路：修复 EX-02 启动快照/首刷前的覆盖空窗，observe 侧 key 字符集与上报校验对齐；EX-01 取值失败改为按 skip/crit 可见并保持 fail-open；诊断回传 socket 启动失败不再拖垮 Application；`release.sh` 加固 `--dry-run`、官方仓资产回验与 checksum 链路，并补强并发与假绿单测。0.9.13 新增 EN-05「保存原图（宿主链路）」；0.9.12 新增诊断回传 socket 快速通道，底栏第二个 tab 由「测试」更名为「实验」；0.9.11 为 CodeFloe 迁移补丁版；0.9.10 新增 UI-06「阻止返回自动刷新」。**同时支持 9.56.0（最新）与 9.54.1（冻结）两个 profile；更早版本走 fail-open，部分功能可能失效**。
+> 当前版本：**0.9.16**（versionCode 32）。适配小红书 9.56.0（9560805）与 9.54.1（9541801）：双 profile（9.54.1 冻结 + 9.56.0 最新），anchors.json 作为唯一源，64 个基线锚点 + 22 个 9.56.0 变体，静态体检清单 methods 64、classes 4（已用 9.56.0 APK 复跑 methods 64/64、classes 4/4）。本版为正式版整理：AD-02/08/09/10 信息流过滤合并为单次安装/遍历，删除临时 SaveUrlProbe，清理死锚点与测试专用 API，补齐共享/class 锚点依赖（core 0.8.1）；2026-11-27 已在 9.56.0 真机完成冒烟（信息流共享链路注册/命中，无新增 critical），未逐项回归全部功能。0.9.15 新增逐功能降级与版本矩阵，profile 选版对齐 core 0.6.1。0.9.14 聚焦稳定性与发布链路：修复 EX-02 启动快照/首刷前的覆盖空窗，observe 侧 key 字符集与上报校验对齐；EX-01 取值失败改为按 skip/crit 可见并保持 fail-open；诊断回传 socket 启动失败不再拖垮 Application；`release.sh` 加固 `--dry-run`、官方仓资产回验与 checksum 链路，并补强并发与假绿单测。0.9.13 新增 EN-05「保存原图（宿主链路）」；0.9.12 新增诊断回传 socket 快速通道，底栏第二个 tab 由「测试」更名为「实验」；0.9.11 为 CodeFloe 迁移补丁版；0.9.10 新增 UI-06「阻止返回自动刷新」。**同时支持 9.56.0（最新）与 9.54.1（冻结）两个 profile；更早版本走 fail-open，部分功能可能失效**。
 
 > ⚠️ 本项目与小红书官方无任何关联，仅供学习、研究和个人设备使用。
 > 使用前请阅读文末的[免责声明](#免责声明)。
@@ -162,8 +162,8 @@ PV-03 另有一个子选项「同时删除 xsec_token」，不单独编号，依
 
 | 项目 | 状态 |
 |---|---|
-| 小红书 9.56.0（9560805） | 已适配：27 个漂移锚点重定位为 9.56.0 变体，profile 展开 70 个锚点；静态体检 methods 70/70、classes 6/6（2026-11-25） |
-| 小红书 9.54.1（9541801） | 已适配并冻结：70 个基线锚点按 9.54.1 APK 定位，profile 展开 70 个锚点；锁文件 tools/profile-locks.json 防止基线漂移 |
+| 小红书 9.56.0（9560805） | 已适配：22 个漂移锚点重定位为 9.56.0 变体，profile 展开 64 个锚点 + 4 个类锚点；静态体检清单 methods 64、classes 4（本轮未重跑 APK 体检） |
+| 小红书 9.54.1（9541801） | 已适配并冻结：64 个基线锚点按 9.54.1 APK 定位，profile 展开 64 个锚点 + 4 个类锚点；锁文件 tools/profile-locks.json 防止基线漂移 |
 | 小红书 9.55.x / 9.53.0 及更早 | **未收录**：不阻断运行（fail-open），横幅提示「未适配」，按最新 profile 尽力挂载，大部分功能可能失效 |
 | Android 10 及以上（minSdk 29） | 支持；运行记录覆盖 Android 15（模拟器）与 Android 17（0.8.0 核心回归、0.8.1 诊断修复复验），其余版本未逐一验证 |
 | LSPosed（API 102） | 支持 |
@@ -201,7 +201,7 @@ gradlew assembleRelease    # 正式包，产物名 quietbox-<版本>.apk
 release 读取仓库根目录的 `keystore.properties` 签名（该文件不入库）。缺失或 `storeFile` 未配置时，release 任务在执行前直接失败，不会回退 debug 签名，也不会产出未签名包。
 
 工具链：Gradle 8.13（wrapper） · AGP 8.13.2 · compileSdk 37 · minSdk 29 · JDK 21（构建）；字节码 source/target 仍为 17。
-当前单测 602 项，`./gradlew :app:testDebugUnitTest` 可复跑；lint 0 errors / 20 warnings。
+当前单测 618 项，`./gradlew :app:testDebugUnitTest` 可复跑；lint 0 errors / 20 warnings。
 首次构建需要自己提供 `local.properties`（`sdk.dir=<SDK 路径>`）。
 若本机 SDK 平台目录是版本化命名（如 `platforms/android-37.2`），AGP 无法从裸 `compileSdk 37` 解析它，`assembleDebug`/`assembleRelease` 会在改配置/编译阶段直接失败。解决办法：把该目录重命名为 `android-37`，或在 SDK 管理器里安装 API 37 基础包；这是 AGP 对版本化平台目录的限制，不是模块问题。
 
